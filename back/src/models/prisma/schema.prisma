@@ -1,0 +1,198 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model tblChiTietDonHang {
+  PK_MaChiTietDonHang Int          @id @default(autoincrement())
+  FK_MaDonHang        Int
+  FK_MaDienThoai      Int
+  SoLuongMua          Int
+  DonGia              Int
+  tblDonHang          tblDonHang   @relation(fields: [FK_MaDonHang], references: [PK_MaDonHang], onDelete: NoAction, onUpdate: NoAction, map: "tblChiTietDonHang_ibfk_1")
+  tblDienThoai        tblDienThoai @relation(fields: [FK_MaDienThoai], references: [PK_MaDienThoai], onDelete: NoAction, onUpdate: NoAction, map: "tblChiTietDonHang_ibfk_2")
+
+  @@index([FK_MaDienThoai], map: "FK_MaDienThoai")
+  @@index([FK_MaDonHang], map: "FK_MaDonHang")
+}
+
+model tblChiTietPhieuNhap {
+  PK_MaChiTietPhieuNhap Int     @id @default(autoincrement())
+  GhiChu                String? @db.Text
+  SoLuongNhap           Int
+  GiaNhap               Int
+  FK_MaPhieuNhap        Int
+  FK_MaDienThoai        Int
+
+  @@index([FK_MaDienThoai], map: "FK_MaDienThoai")
+  @@index([FK_MaPhieuNhap], map: "FK_MaPhieuNhap")
+}
+
+model tblDanhGia {
+  PK_MaDanhGia    Int      @id @default(autoincrement())
+  NoiDungDanhGia  String   @db.Text
+  ThoiGianDanhGia DateTime @db.DateTime(0)
+  Sao             Int      @default(0)
+  Thich           Int      @default(0)
+  FK_MaDienThoai  Int
+  FK_MaNguoiDung  Int
+
+  @@index([FK_MaDienThoai], map: "FK_MaDienThoai")
+  @@index([FK_MaNguoiDung], map: "FK_MaNguoiDung")
+}
+
+model tblDienThoai {
+  PK_MaDienThoai    Int                 @id @default(autoincrement())
+  TenDienThoai      String              @db.VarChar(50)
+  DoPhanGiai        String              @db.VarChar(15)
+  HinhAnh           String              @db.VarChar(100)
+  HeDieuHanh        String              @db.VarChar(10)
+  CamTruoc          String              @db.VarChar(10)
+  CamSau            String              @db.VarChar(10)
+  RAM               String              @db.VarChar(10)
+  ROM               String              @db.VarChar(10)
+  Pin               String              @db.VarChar(10)
+  SoLuong           Int
+  DonGia            Int
+  FK_MaHang         Int?
+  tblChiTietDonHang tblChiTietDonHang[]
+
+  @@index([FK_MaHang], map: "FK_MaHang")
+}
+
+model tblDonHang {
+  PK_MaDonHang             Int                 @id @default(autoincrement())
+  TenNguoiNhan             String              @db.VarChar(50)
+  DiaChiGiaoHang           String              @db.Text
+  SoDienThoai              String              @db.VarChar(10)
+  GhiChu                   String?             @db.Text
+  ThoiGianTaoDonHang       DateTime            @default(now()) @db.DateTime(0)
+  FK_MaNguoiDung           Int
+  FK_MaTrangThaiDonHang    Int
+  ThoiGianCapNhatTrangThai DateTime            @db.DateTime(0)
+  tblChiTietDonHang        tblChiTietDonHang[]
+
+  @@index([FK_MaNguoiDung], map: "FK_MaNguoiDung")
+  @@index([FK_MaTrangThaiDonHang], map: "FK_MaTrangThaiDonHang")
+}
+
+model tblGioHang {
+  PK_MaGioHang       Int     @id @default(autoincrement())
+  HinhAnh            String  @db.VarChar(100)
+  TenDienThoai       String  @db.VarChar(50)
+  SoLuong            Int
+  DonGia             Int
+  TenDangNhap        String  @db.VarChar(50)
+  TrangThaiThanhToan Boolean
+  FK_MaDienThoai     Int
+
+  @@index([FK_MaDienThoai], map: "FK_MaDienThoai")
+}
+
+model tblHang {
+  PK_MaHang Int     @id @default(autoincrement())
+  TenHang   String  @db.VarChar(50)
+  MoTa      String? @db.VarChar(50)
+}
+
+model tblKhachHang {
+  PK_MaKhachHang          Int        @id @default(autoincrement())
+  TenKhachHang            String     @db.VarChar(50)
+  DiaChi                  String?    @db.VarChar(50)
+  SoDienThoai             String     @db.VarChar(10)
+  Email                   String     @db.VarChar(50)
+  TenDangNhap             String     @db.VarChar(20)
+  MatKhau                 String     @db.Text
+  VerificationToken       String?    @db.Text
+  IsVerified              Boolean?   @default(false)
+  VerifiedDate            DateTime?  @db.Date
+  TinhTrangHoatDong       Boolean?   @default(true)
+  PasswordToken           String?    @db.VarChar(50)
+  PasswordTokenExpiration DateTime?  @db.Date
+  tblToken                tblToken[]
+}
+
+model tblKhuyenMai {
+  PK_MaKhuyenMai          Int      @id @default(autoincrement())
+  TenChuongTrinhKhuyenMai String   @db.VarChar(50)
+  NgayBatDau              DateTime @db.DateTime(0)
+  NgayKetThuc             DateTime @db.DateTime(0)
+  PhanTramGiamGia         Int
+  Note                    String?  @db.VarChar(50)
+  FK_MaDienThoai          Int?
+
+  @@index([FK_MaDienThoai], map: "FK_MaDienThoai")
+}
+
+model tblLichSuTrangThaiDonHang {
+  PK_MaLichSu           Int       @id @default(autoincrement())
+  FK_MaDonHang          Int
+  FK_MaTrangThaiDonHang Int
+  ThoiGianCapNhat       DateTime? @default(now()) @db.DateTime(0)
+  TenNguoiCapNhat       String    @db.VarChar(50)
+}
+
+model tblLienHe {
+  PK_MaLienHe Int      @id @default(autoincrement())
+  TenNguoiGui String   @db.VarChar(50)
+  Email       String   @db.VarChar(50)
+  SoDienThoai String   @db.VarChar(10)
+  TinNhan     String   @db.Text
+  ThoiGian    DateTime @default(now()) @db.DateTime(0)
+}
+
+model tblNhaCungCap {
+  PK_MaNhaCungCap Int    @id @default(autoincrement())
+  TenNhaCungCap   String @db.VarChar(50)
+  DiaChi          String @db.VarChar(100)
+  SoDienThoai     String @db.VarChar(10)
+}
+
+model tblNhanVien {
+  PK_MaNhanVien Int            @id @default(autoincrement())
+  TenNhanVien   String         @db.VarChar(50)
+  DiaChi        String         @db.VarChar(100)
+  SoDienThoai   String         @db.VarChar(10)
+  Email         String         @db.VarChar(50)
+  TenDangNhap   String         @db.VarChar(50)
+  MatKhau       String         @db.VarChar(50)
+  NgaySinh      DateTime       @db.Date
+  NgayVaoLam    DateTime       @db.Date
+  NgayKetThuc   DateTime?      @db.Date
+  LuongCoBan    Float?         @db.Float
+  PhuCap        Float?         @db.Float
+  Quyen         String         @default("NhanVien") @db.VarChar(20)
+  tblPhieuNhap  tblPhieuNhap[]
+}
+
+model tblPhieuNhap {
+  PK_MaPhieuNhap  Int         @id @default(autoincrement())
+  NgayNhap        DateTime    @default(now()) @db.DateTime(0)
+  FK_MaNhaCungCap Int
+  FK_MaNhanVien   Int
+  tblNhanVien     tblNhanVien @relation(fields: [FK_MaNhanVien], references: [PK_MaNhanVien], onUpdate: Restrict, map: "FK_MaNhanVien")
+
+  @@index([FK_MaNhaCungCap], map: "FK_MaNhaCungCap")
+  @@index([FK_MaNhanVien], map: "FK_MaNhanVien")
+}
+
+model tblToken {
+  PK_MaToken     Int          @id @default(autoincrement())
+  RefreshToken   String       @db.Text
+  IP             String       @db.Text
+  UserAgent      String       @db.Text
+  IsValid        Boolean      @default(dbgenerated("b'1'")) @db.Bit(1)
+  FK_MaKhachHang Int
+  tblKhachHang   tblKhachHang @relation(fields: [FK_MaKhachHang], references: [PK_MaKhachHang], onDelete: NoAction, onUpdate: NoAction, map: "tblToken_ibfk_1")
+
+  @@index([FK_MaKhachHang], map: "FK_MaKhachHang")
+}
+
+model tblTrangThaiDonHang {
+  PK_MaTrangThaiDonHang Int    @id @default(autoincrement())
+  TenTrangThaiDonHang   String @db.VarChar(50)
+}
