@@ -6,10 +6,10 @@ const crypto = require('crypto')
 const prisma = new PrismaClient()
 
 const getKhachHang = async (req, res) => {
-    console.log(req.user)
     const KhachHang = await prisma.tblKhachHang.findMany({})
     if (!KhachHang) {
-        throw new CustomAPIError.NotFoundError('Không tìm thấy người dùng nào!')
+        res.status(StatusCodes.NOT_FOUND).json({ msg: 'Không tìm thấy khách hàng nào!' })
+        throw new CustomAPIError.NotFoundError('Không tìm thấy khách hàng nào!')
     }
     return res.status(StatusCodes.OK).json(KhachHang)
 }
@@ -17,6 +17,7 @@ const getKhachHang = async (req, res) => {
 const addKhachHang = async (req, res) => {
     let { TenKhachHang, DiaChi, SoDienThoai, Email, TenDangNhap, MatKhau, IsVerified, TinhTrangHoatDong } = req.body
     if (!TenKhachHang || !DiaChi || !SoDienThoai || !Email || !TenDangNhap || !MatKhau) {
+        res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Không đủ dữ liệu' })
         throw new CustomAPIError.BadRequestError('Không đủ dữ liệu')
     }
     let checkKhachHang = await prisma.tblKhachHang.findFirst({
@@ -24,10 +25,10 @@ const addKhachHang = async (req, res) => {
             TenDangNhap: TenDangNhap,
         },
     })
-    const hashedPassword = crypto.createHash('sha256').update(MatKhau).digest('hex')
-    IsVerified = !!IsVerified
-    TinhTrangHoatDong = !!TinhTrangHoatDong
     if (!checkKhachHang) {
+        const hashedPassword = crypto.createHash('sha256').update(MatKhau).digest('hex')
+        IsVerified = !!IsVerified
+        TinhTrangHoatDong = !!TinhTrangHoatDong
         await prisma.tblKhachHang.create({
             data: {
                 TenKhachHang: TenKhachHang,
@@ -40,44 +41,55 @@ const addKhachHang = async (req, res) => {
                 TinhTrangHoatDong: TinhTrangHoatDong,
             },
         })
-        const KhachHang = await prisma.tblKhachHang.findMany({})
-        res.status(StatusCodes.CREATED).json(KhachHang)
+        res.status(StatusCodes.CREATED).json({ msg: 'Thêm khách hàng thành công' })
     } else {
-        throw new CustomAPIError.BadRequestError('Trùng khách')
+        res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Khách hàng đã tồn tại' })
+        throw new CustomAPIError.BadRequestError('Khách hàng đã tồn tại')
     }
 }
 
 const updateKhachHang = async (req, res) => {
     let { TenKhachHang, DiaChi, SoDienThoai, Email, TenDangNhap, MatKhau, IsVerified, TinhTrangHoatDong } = req.body
-    const PK_MaKhachHang = parseInt(req.params.id)
+    const PK_MaKhachHang = parseInt(req.params.PK_MaKhachHang)
     if (!TenKhachHang || !DiaChi || !SoDienThoai || !Email || !TenDangNhap || !MatKhau) {
+        res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Không đủ dữ liệu' })
         throw new CustomAPIError.BadRequestError('Không đủ dữ liệu')
     }
-    const hashedPassword = crypto.createHash('sha256').update(MatKhau).digest('hex')
-    IsVerified = !!IsVerified
-    TinhTrangHoatDong = !!TinhTrangHoatDong
-    await prisma.tblKhachHang.update({
-        data: {
-            TenKhachHang: TenKhachHang,
-            DiaChi: DiaChi,
-            SoDienThoai: SoDienThoai,
-            Email: Email,
-            TenDangNhap: TenDangNhap,
-            MatKhau: hashedPassword,
-            IsVerified: IsVerified,
-            TinhTrangHoatDong: TinhTrangHoatDong,
-        },
+    let checkKhachHang = await prisma.tblKhachHang.findFirst({
         where: {
-            PK_MaKhachHang: PK_MaKhachHang,
+            TenDangNhap: TenDangNhap,
         },
     })
-    const KhachHang = await prisma.tblKhachHang.findMany({})
-    res.status(StatusCodes.OK).json(KhachHang)
+    if (checkKhachHang) {
+        const hashedPassword = crypto.createHash('sha256').update(MatKhau).digest('hex')
+        IsVerified = !!IsVerified
+        TinhTrangHoatDong = !!TinhTrangHoatDong
+        await prisma.tblKhachHang.update({
+            data: {
+                TenKhachHang: TenKhachHang,
+                DiaChi: DiaChi,
+                SoDienThoai: SoDienThoai,
+                Email: Email,
+                TenDangNhap: TenDangNhap,
+                MatKhau: hashedPassword,
+                IsVerified: IsVerified,
+                TinhTrangHoatDong: TinhTrangHoatDong,
+            },
+            where: {
+                PK_MaKhachHang: PK_MaKhachHang,
+            },
+        })
+        res.status(StatusCodes.OK).json({ msg: 'Chỉnh sửa khách hàng thành công' })
+    } else {
+        res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Khách hàng không tồn tại' })
+        throw new CustomAPIError.BadRequestError('Khách hàng không tồn tại')
+    }
 }
 
 const deleteKhachHang = async (req, res) => {
-    let PK_MaKhachHang = parseInt(req.params.id)
+    let PK_MaKhachHang = parseInt(req.params.PK_MaKhachHang)
     if (!PK_MaKhachHang) {
+        res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Không đủ dữ liệu' })
         throw new CustomAPIError.BadRequestError('Không đủ dữ liệu')
     }
     await prisma.tblKhachHang.delete({
@@ -85,8 +97,7 @@ const deleteKhachHang = async (req, res) => {
             PK_MaKhachHang: PK_MaKhachHang,
         },
     })
-    const KhachHang = await prisma.tblKhachHang.findMany({})
-    res.status(StatusCodes.OK).json(KhachHang)
+    res.status(StatusCodes.OK).json({ msg: 'Xóa khách hàng thành công' })
 }
 
 module.exports = {

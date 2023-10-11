@@ -1,5 +1,5 @@
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, watchEffect } from 'vue'
 import { useAuthStore } from '@/stores/AuthStore'
 import { RouterLink } from 'vue-router'
 
@@ -12,6 +12,7 @@ let TenDangNhap = ref('')
 let MatKhau = ref('')
 let XacNhanMatKhau = ref('')
 let matchPassword = ref(false)
+let status = ref('')
 
 const checkMatchPassword = () => {
     matchPassword.value = MatKhau.value === XacNhanMatKhau.value
@@ -21,6 +22,9 @@ checkMatchPassword()
 
 watch([MatKhau, XacNhanMatKhau], () => {
     checkMatchPassword()
+})
+watchEffect(() => {
+    status.value = store.status
 })
 </script>
 
@@ -66,6 +70,9 @@ watch([MatKhau, XacNhanMatKhau], () => {
             </div>
             <div v-if="!matchPassword" class="form-group">
                 <p style="color: red">Mật khẩu và mật khẩu xác nhận không khớp!</p>
+            </div>
+            <div class="form-group" v-if="status">
+                <h1>{{ status }}</h1>
             </div>
             <div class="form-group">
                 <button class="btn btn-primary btn-block" type="submit">Đăng ký</button>

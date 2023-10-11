@@ -1,8 +1,11 @@
 <script setup>
 import { defineProps, onMounted } from 'vue'
+import { useDienThoaiStore } from '@/stores/DienThoaiStore'
+
+const store = useDienThoaiStore()
 
 const props = defineProps({
-    PK_MaDienThoai: String,
+    PK_MaDienThoai: Number,
     TenDienThoai: String,
     HinhAnh: String,
     DonGia: Number,
@@ -23,8 +26,8 @@ onMounted(() => {
 <template>
     <div class="col-xl-4 col-lg-4 col-md-4 col-sm-6 margin">
         <div class="brand_box">
-            <router-link :to="`/san-pham/${props.PK_MaDienThoai}`">
-                <img :src="require(`../assets/images/${props.HinhAnh}`)" alt="ảnh lỗi" />
+            <router-link :to="`/${props.PK_MaDienThoai}`">
+                <img :src="store.AnhDienThoai.filter((Anh) => Anh.includes(props.HinhAnh))" alt="ảnh lỗi" />
                 <h3>
                     <strong class="red">{{ props.DonGia }}</strong>
                 </h3>

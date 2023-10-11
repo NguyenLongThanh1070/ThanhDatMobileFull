@@ -1,4 +1,13 @@
-<script setup></script>
+<script setup>
+import { useAuthStore } from '@/stores/AuthStore'
+import { useDienThoaiStore } from '@/stores/DienThoaiStore'
+import { ref } from 'vue'
+
+const DienThoaiStore = useDienThoaiStore()
+const store = useAuthStore()
+
+let timkiem = ref('')
+</script>
 <template>
     <header>
         <!-- header inner -->
@@ -25,7 +34,7 @@
                                             <router-link to="/danh-muc-san-pham">Sản phẩm</router-link>
                                         </li>
                                         <li>
-                                            <form action="/tim-kiem" method="get">
+                                            <form @submit.prevent="DienThoaiStore.timDienThoai(timkiem)">
                                                 <div class="input-group rounded">
                                                     <input
                                                         type="search"
@@ -33,25 +42,25 @@
                                                         placeholder="Search"
                                                         aria-label="Search"
                                                         aria-describedby="search-addon"
-                                                        name="search" />
+                                                        v-model="timkiem" />
                                                     <button type="submit" class="btn btn-primary">
                                                         <i class="fas fa-search"></i>
                                                     </button>
                                                 </div>
                                             </form>
                                         </li>
-                                        <li v-if="username">
-                                            <a href="/dangxuat">{{ username }}, đăng xuất</a>
+                                        <li v-if="store.user.username" @click="store.logout()">
+                                            <a>{{ store.user.username }}, đăng xuất</a>
                                         </li>
-                                        <li v-if="username">
+                                        <li v-if="store.user.username">
                                             <router-link to="/gio-hang"
                                                 ><i class="fa-solid fa-cart-shopping"></i
                                             ></router-link>
                                         </li>
-                                        <li v-if="!username">
+                                        <li v-if="!store.user.username">
                                             <router-link to="/dang-ky">Đăng ký</router-link>
                                         </li>
-                                        <li v-if="!username">
+                                        <li v-if="!store.user.username">
                                             <router-link to="/dang-nhap"
                                                 ><i class="fa-solid fa-cart-shopping"></i
                                             ></router-link>
@@ -76,3 +85,14 @@
         <!-- end header inner -->
     </header>
 </template>
+
+<style scoped>
+a {
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+}
+
+a:hover {
+    transform: scale(1.05);
+}
+</style>

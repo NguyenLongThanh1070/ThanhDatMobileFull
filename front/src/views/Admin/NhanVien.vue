@@ -1,15 +1,24 @@
 <script setup>
-import { useLienHeStore } from '@/stores/LienHeStore'
-import { onMounted, ref } from 'vue'
-const store = useLienHeStore()
-store.getContact()
+import { useNhanVienStore } from '@/stores/NhanVienStore'
+import { ref, watchEffect } from 'vue'
+import moment from 'moment'
+const store = useNhanVienStore()
+store.getNhanVien()
 
-let TenNguoiGui = ref('')
-let Email = ref('')
+let TenNhanVien = ref('')
+let DiaChi = ref('')
 let SoDienThoai = ref('')
-let TinNhan = ref('')
-let selectContact = ref([])
-let deleteContacts = ref([])
+let Email = ref('')
+let TenDangNhap = ref('')
+let MatKhau = ref('')
+let NgaySinh = ref('')
+let NgayVaoLam = ref('')
+let LuongCoBan = ref('')
+let PhuCap = ref('')
+let Quyen = ref('')
+let selectNhanVien = ref([])
+let deleteNhanVien = ref([])
+let status = ref('')
 
 // Hàm xử lý sự kiện checkbox tổng được thay đổi trạng thái
 const handleSelectAll = (event) => {
@@ -17,63 +26,44 @@ const handleSelectAll = (event) => {
     checkboxList.forEach((c) => (c.checked = !c.checked))
     // Nếu checkbox tổng được check thì lấy danh sách ID của tất cả các checkbox con
     if (event.target.checked) {
-        deleteContacts.value = Array.from(checkboxList).map((checkbox) => parseInt(checkbox.value))
+        deleteNhanVien.value = Array.from(checkboxList).map((checkbox) => parseInt(checkbox.value))
     } else {
-        deleteContacts.value = []
+        deleteNhanVien.value = []
     }
 }
 
 // Hàm xử lý sự kiện checkbox con được thay đổi trạng thái
 const handleSelectOne = (event) => {
-    const contactId = parseInt(event.target.value)
-    // Nếu checkbox được check thì thêm contactId vào danh sách ID
+    const NhanVienId = parseInt(event.target.value)
+    // Nếu checkbox được check thì thêm NhanVienId vào danh sách ID
     if (event.target.checked) {
-        deleteContacts.value = [...deleteContacts.value, contactId]
+        deleteNhanVien.value = [...deleteNhanVien.value, NhanVienId]
     } else {
-        deleteContacts.value = deleteContacts.value.filter((id) => id !== contactId)
+        deleteNhanVien.value = deleteNhanVien.value.filter((id) => id !== NhanVienId)
     }
 }
 
-onMounted(() => {
-    // // Activate tooltip
-    // //console.log(document.querySelector('#tooltip'))
-    // // Select/Deselect checkboxes
-    // // var checkbox = document.querySelector('#checkbox1')
-    // console.log(checkbox)
-    // document.querySelector('#selectAll').click(function () {
-    //     if (this.checked) {
-    //         checkbox.each(function () {
-    //             this.checked = true
-    //         })
-    //     } else {
-    //         checkbox.each(function () {
-    //             this.checked = false
-    //         })
-    //     }
-    // })
-    // checkbox.click(function () {
-    //     if (!this.checked) {
-    //         document.querySelector('#selectAll').prop('checked', false)
-    //     }
-    // })
+watchEffect(() => {
+    status.value = store.status
 })
 </script>
 
 <template>
+    <div v-if="status" class="alert alert-success" role="alert">{{ status }}</div>
     <h1 v-if="store.loading">Loading...</h1>
     <div v-else class="container">
         <div class="table-wrapper">
             <div class="table-title">
                 <div class="row">
                     <div class="col-sm-6">
-                        <h2>Liên hệ</h2>
+                        <h2>Nhân viên</h2>
                     </div>
                     <div class="col-sm-6">
                         <a href="#addEmployeeModal" class="btn btn-success" data-toggle="modal"
-                            ><i class="material-icons fa-solid fa-circle-plus"></i> <span>Add New Employee</span></a
+                            ><i class="material-icons fa-solid fa-circle-plus"></i> <span>Thêm nhân viên</span></a
                         >
                         <a href="#deleteEmployeeModal" class="btn btn-danger" data-toggle="modal"
-                            ><i class="material-icons fa-solid fa-circle-minus"></i><span>Delete</span></a
+                            ><i class="material-icons fa-solid fa-circle-minus"></i><span>Xóa</span></a
                         >
                     </div>
                 </div>
@@ -87,37 +77,47 @@ onMounted(() => {
                                 <label for="selectAll"></label>
                             </span>
                         </th>
-                        <th>Tên người gửi</th>
-                        <th>Email</th>
+                        <th>Tên Nhân viên</th>
+                        <th>Địa chỉ</th>
                         <th>Số điện thoại</th>
-                        <th>Tin nhắn</th>
-                        <th>Thời gian</th>
+                        <th>Email</th>
+                        <th>Tên đăng nhập</th>
+                        <th>Ngày sinh</th>
+                        <th>Ngày vào làm</th>
+                        <th>Lương cơ bản</th>
+                        <th>Phụ cấp</th>
+                        <th>Quyền</th>
                         <th>CRUD</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(contact, id) in store.contacts" :key="id">
+                    <tr v-for="(NhanVien, id) in store.NhanVien" :key="id">
                         <td>
                             <span class="custom-checkbox">
                                 <input
                                     type="checkbox"
                                     :id="'checkbox' + id"
-                                    :value="contact.PK_MaLienHe"
+                                    :value="NhanVien.PK_MaLienHe"
                                     @change="handleSelectOne" />
                                 <label for="'checkbox'+id"></label>
                             </span>
                         </td>
-                        <td>{{ contact.TenNguoiGui }}</td>
-                        <td>{{ contact.Email }}</td>
-                        <td>{{ contact.SoDienThoai }}</td>
-                        <td>{{ contact.TinNhan }}</td>
-                        <td>{{ contact.ThoiGian }}</td>
+                        <td>{{ NhanVien.TenNhanVien }}</td>
+                        <td>{{ NhanVien.DiaChi }}</td>
+                        <td>{{ NhanVien.SoDienThoai }}</td>
+                        <td>{{ NhanVien.Email }}</td>
+                        <td>{{ NhanVien.TenDangNhap }}</td>
+                        <td>{{ moment(NhanVien.NgaySinh).format('DD-MM-YYYY') }}</td>
+                        <td>{{ moment(NhanVien.NgayVaoLam).format('DD-MM-YYYY') }}</td>
+                        <td>{{ NhanVien.LuongCoBan }}</td>
+                        <td>{{ NhanVien.PhuCap }}</td>
+                        <td>{{ NhanVien.Quyen }}</td>
                         <td>
                             <a
                                 href="#editEmployeeModal"
                                 class="edit"
                                 data-toggle="modal"
-                                @click="selectContact = { ...contact }"
+                                @click="selectNhanVien = { ...NhanVien }"
                                 ><i
                                     class="material-icons fa-solid fa-pen-to-square"
                                     data-toggle="tooltip"
@@ -127,7 +127,7 @@ onMounted(() => {
                                 href="#deleteEmployeeModal"
                                 class="delete"
                                 data-toggle="modal"
-                                @click="deleteContacts = { ...contact }"
+                                @click="deleteNhanVien = { ...NhanVien }"
                                 ><i class="material-icons fa-solid fa-trash" data-toggle="tooltip" title="Delete"></i
                             ></a>
                         </td>
@@ -140,27 +140,73 @@ onMounted(() => {
     <div id="addEmployeeModal" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form @submit.prevent="store.addContact(TenNguoiGui, Email, SoDienThoai, TinNhan)">
+                <form
+                    @submit.prevent="
+                        store.addNhanVien(
+                            TenNhanVien,
+                            DiaChi,
+                            SoDienThoai,
+                            Email,
+                            TenDangNhap,
+                            MatKhau,
+                            NgaySinh,
+                            NgayVaoLam,
+                            LuongCoBan,
+                            PhuCap,
+                            Quyen.value
+                        )
+                    ">
                     <div class="modal-header">
-                        <h4 class="modal-title">Thêm liên hệ</h4>
+                        <h4 class="modal-title">Thêm nhân viên</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     </div>
                     <div class="modal-body">
                         <div class="form-group">
-                            <label>Tên người gửi</label>
-                            <input type="text" class="form-control" v-model="TenNguoiGui" required />
+                            <label>Tên nhân viên</label>
+                            <input type="text" class="form-control" v-model="TenNhanVien" required />
                         </div>
                         <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" class="form-control" v-model="Email" required />
+                            <label>Địa chỉ</label>
+                            <input type="text" class="form-control" v-model="DiaChi" required />
                         </div>
                         <div class="form-group">
                             <label>Số điện thoại</label>
                             <input type="text" class="form-control" v-model="SoDienThoai" required />
                         </div>
                         <div class="form-group">
-                            <label>Tin nhắn</label>
-                            <textarea class="form-control" v-model="TinNhan" required></textarea>
+                            <label>Email</label>
+                            <input type="email" class="form-control" v-model="Email" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Tên đăng nhập</label>
+                            <input type="text" class="form-control" v-model="TenDangNhap" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Mật khẩu</label>
+                            <input type="password" class="form-control" v-model="MatKhau" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Ngày sinh</label>
+                            <input type="date" class="form-control" v-model="NgaySinh" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Ngày vào làm</label>
+                            <input type="date" class="form-control" v-model="NgayVaoLam" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Lương cơ bản</label>
+                            <input type="number" class="form-control" v-model="LuongCoBan" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Phụ cấp</label>
+                            <input type="number" class="form-control" v-model="PhuCap" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Quyền</label>
+                            <select class="form-control" v-model="Quyen" required>
+                                <option value="NhanVien">Nhân viên</option>
+                                <option value="QuanLy">Quản lý</option>
+                            </select>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -177,37 +223,72 @@ onMounted(() => {
             <div class="modal-content">
                 <form
                     @submit.prevent="
-                        store.updateContact(
-                            selectContact.PK_MaLienHe,
-                            selectContact.TenNguoiGui,
-                            selectContact.Email,
-                            selectContact.SoDienThoai,
-                            selectContact.TinNhan
+                        store.updateNhanVien(
+                            selectNhanVien.PK_MaNhanVien,
+                            selectNhanVien.TenNhanVien,
+                            selectNhanVien.DiaChi,
+                            selectNhanVien.SoDienThoai,
+                            selectNhanVien.Email,
+                            selectNhanVien.TenDangNhap,
+                            selectNhanVien.MatKhau,
+                            selectNhanVien.NgaySinh,
+                            selectNhanVien.NgayVaoLam,
+                            selectNhanVien.LuongCoBan,
+                            selectNhanVien.PhuCap,
+                            selectNhanVien.Quyen.value
                         )
                     ">
                     <div class="modal-header">
-                        <h4 class="modal-title">Edit Employee</h4>
+                        <h4 class="modal-title">Sửa nhân viên</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     </div>
                     <div class="modal-body">
-                        <div class="form-group" style="display: none">
-                            <input type="text" class="form-control" v-model="selectContact.PK_MaLienHe" />
+                        <div class="form-group">
+                            <label>Tên nhân viên</label>
+                            <input type="text" class="form-control" v-model="selectNhanVien.TenNhanVien" required />
                         </div>
                         <div class="form-group">
-                            <label>Tên người gửi</label>
-                            <input type="text" class="form-control" v-model="selectContact.TenNguoiGui" required />
-                        </div>
-                        <div class="form-group">
-                            <label>Email</label>
-                            <input type="email" class="form-control" v-model="selectContact.Email" required />
+                            <label>Địa chỉ</label>
+                            <input type="text" class="form-control" v-model="selectNhanVien.DiaChi" required />
                         </div>
                         <div class="form-group">
                             <label>Số điện thoại</label>
-                            <textarea class="form-control" v-model="selectContact.SoDienThoai" required></textarea>
+                            <input type="text" class="form-control" v-model="selectNhanVien.SoDienThoai" required />
                         </div>
                         <div class="form-group">
-                            <label>Tin nhắn</label>
-                            <input type="text" class="form-control" v-model="selectContact.TinNhan" required />
+                            <label>Email</label>
+                            <input type="email" class="form-control" v-model="selectNhanVien.Email" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Tên đăng nhập</label>
+                            <input type="text" class="form-control" v-model="selectNhanVien.TenDangNhap" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Mật khẩu</label>
+                            <input type="password" class="form-control" v-model="selectNhanVien.MatKhau" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Ngày sinh</label>
+                            <input type="date" class="form-control" v-model="selectNhanVien.NgaySinh" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Ngày vào làm</label>
+                            <input type="date" class="form-control" v-model="selectNhanVien.NgayVaoLam" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Lương cơ bản</label>
+                            <input type="number" class="form-control" v-model="selectNhanVien.LuongCoBan" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Phụ cấp</label>
+                            <input type="number" class="form-control" v-model="selectNhanVien.PhuCap" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Quyền</label>
+                            <select class="form-control" v-model="selectNhanVien.Quyen" required>
+                                <option value="NhanVien">Nhân viên</option>
+                                <option value="QuanLy">Quản lý</option>
+                            </select>
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -222,16 +303,16 @@ onMounted(() => {
     <div id="deleteEmployeeModal" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form @submit.prevent="store.deleteContact(deleteContacts)">
+                <form @submit.prevent="store.deleteNhanVien(deleteNhanVien)">
                     <div class="modal-header">
-                        <h4 class="modal-title">Xóa liên hệ</h4>
+                        <h4 class="modal-title">Xóa nhân viên</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     </div>
                     <div class="form-group" style="display: none">
-                        <input type="text" class="form-control" v-model="deleteContacts" />
+                        <input type="text" class="form-control" v-model="deleteNhanVien" />
                     </div>
                     <div class="modal-body">
-                        <p>Bạn có chắc chắn muốn xóa những liên hệ này không?</p>
+                        <p>Bạn có chắc chắn muốn xóa những nhân viên này không?</p>
                         <p class="text-warning"><small>Hành động này không thể hoàn tác</small></p>
                     </div>
                     <div class="modal-footer">

@@ -3,17 +3,17 @@ import router from '@/router'
 import axios from 'axios'
 import { ref } from 'vue'
 
-export const useLienHeStore = defineStore('contact', {
+export const useLienHeStore = defineStore('LienHe', {
     state: () => ({
         loading: false,
         status: ref(''),
-        contacts: ref([]),
+        LienHe: ref([]),
     }),
     actions: {
-        async addContact(TenNguoiGui, Email, SoDienThoai, TinNhan) {
+        async addLienHe(TenNguoiGui, Email, SoDienThoai, TinNhan) {
             this.status = ''
             try {
-                const URL = 'http://localhost:3000/api/v1/contact'
+                const URL = 'http://localhost:3000/api/v1/lienhe'
                 await axios.post(URL, {
                     TenNguoiGui: TenNguoiGui,
                     Email: Email,
@@ -26,41 +26,41 @@ export const useLienHeStore = defineStore('contact', {
                 console.log(error)
             }
         },
-        async getContact() {
+        async getLienHe() {
             try {
-                const URL = 'http://localhost:3000/api/v1/contact'
+                const URL = 'http://localhost:3000/api/v1/lienhe'
                 this.loading = true
                 const result = await axios.get(URL)
-                this.contacts = await result.data
+                this.LienHe = await result.data
                 this.loading = false
             } catch (error) {
                 console.log(error)
             }
         },
-        async updateContact(PK_MaLienHe, TenNguoiGui, Email, SoDienThoai, TinNhan) {
+        async updateLienHe(PK_MaLienHe, TenNguoiGui, Email, SoDienThoai, TinNhan) {
             try {
-                const URL = `http://localhost:3000/api/v1/contact/${PK_MaLienHe}`
+                const URL = `http://localhost:3000/api/v1/lienhe/${PK_MaLienHe}`
                 await axios.put(URL, {
                     TenNguoiGui: TenNguoiGui,
                     Email: Email,
                     SoDienThoai: SoDienThoai,
                     TinNhan: TinNhan,
                 })
-                this.getContact()
+                this.getLienHe()
             } catch (error) {
                 console.log(error)
             }
         },
-        async deleteContact(deleteContacts) {
-            for (const PK_MaLienHe of deleteContacts) {
+        async deleteLienHe(deleteLienHe) {
+            for (const PK_MaLienHe of deleteLienHe) {
                 try {
-                    const URL = `http://localhost:3000/api/v1/contact/${PK_MaLienHe}`
+                    const URL = `http://localhost:3000/api/v1/lienhe/${PK_MaLienHe}`
                     await axios.delete(URL)
                 } catch (error) {
                     console.log(error)
                 }
             }
-            this.getContact()
+            this.getLienHe()
         },
     },
 })

@@ -1,26 +1,34 @@
 <script setup>
 import ProductsGrid from '@/components/ProductsGrid.vue'
-import { ref } from 'vue'
+import { ref, watchEffect } from 'vue'
 import { useDienThoaiStore } from '@/stores/DienThoaiStore'
 import { useLienHeStore } from '@/stores/LienHeStore'
+import { useAuthStore } from '@/stores/AuthStore'
 import { computed } from 'vue'
 
-const productStore = useDienThoaiStore()
+const status = ref('')
+const AuthStore = useAuthStore()
+const DienThoaiStore = useDienThoaiStore()
 const contactStore = useLienHeStore()
 let TenNguoiGui = ref('')
 let Email = ref('')
 let SoDienThoai = ref('')
 let TinNhan = ref('')
 
+DienThoaiStore.getDienThoai()
 const filteredProducts = computed(() => {
-    let products = productStore.DienThoai
-    console.log(products)
+    let products = DienThoaiStore.DienThoai
     products = products.filter((product) => product.PK_MaDienThoai < 7)
     return products
 })
+
+watchEffect(() => {
+    status.value = contactStore.status
+    status.value = AuthStore.status
+})
 </script>
 <template>
-    <div v-if="contactStore.status" class="alert alert-success" role="alert">{{ contactStore.status }}</div>
+    <div v-if="status" class="alert alert-success" role="alert">{{ status }}</div>
     <section class="slider_section">
         <div id="myCarousel" class="carousel slide banner-main" data-ride="carousel">
             <div class="carousel-inner">

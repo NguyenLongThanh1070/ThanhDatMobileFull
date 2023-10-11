@@ -1,14 +1,15 @@
 <script setup>
 import { useDienThoaiStore } from '@/stores/DienThoaiStore'
-import { onMounted, ref } from 'vue'
-import axios from 'axios'
+import { ref, watchEffect } from 'vue'
 
 const store = useDienThoaiStore()
 store.getDienThoai()
 
 let TenDienThoai = ref('')
 let DoPhanGiai = ref('')
-// let HinhAnh = ref('')
+let ThuongHieu = ref('')
+let HinhAnh = ref('')
+let fileHinhAnh = ref(null)
 let HeDieuHanh = ref('')
 let CamTruoc = ref('')
 let CamSau = ref('')
@@ -17,9 +18,9 @@ let ROM = ref('')
 let Pin = ref('')
 let SoLuong = ref(0)
 let DonGia = ref(0)
-let FK_MaHang = ref('')
 let selectDienThoai = ref([])
 let deleteDienThoai = ref([])
+let status = ref('')
 
 // Hàm xử lý sự kiện checkbox tổng được thay đổi trạng thái
 const handleSelectAll = (event) => {
@@ -44,87 +45,18 @@ const handleSelectOne = (event) => {
     }
 }
 
-async function addDienThoai() {
-    const formData = new FormData() // Khởi tạo đối tượng FormData để submit dữ liệu
-    formData.append('TenDienThoai', TenDienThoai)
-    formData.append('DoPhanGiai', DoPhanGiai)
-    formData.append('HinhAnh', this.file, this.file.name) // Thêm tập tin vào FormData
-    formData.append('HeDieuHanh', HeDieuHanh)
-    formData.append('CamTruoc', CamTruoc)
-    formData.append('CamSau', CamSau)
-    formData.append('RAM', RAM)
-    formData.append('ROM', ROM)
-    formData.append('Pin', Pin)
-    formData.append('SoLuong', SoLuong)
-    formData.append('DonGia', DonGia)
-    formData.append('FK_MaHang', FK_MaHang)
-    try {
-        const response = await axios.post(`http://localhost:3000/api/v1/DienThoai/`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        })
-        console.log(response.data)
-    } catch (error) {
-        console.log(error.response.data)
-    }
-}
-async function updateDienThoai() {
-    const formData = new FormData() // Khởi tạo đối tượng FormData để submit dữ liệu
-    formData.append('PK_MaDienThoai', selectDienThoai.value)
-    formData.append('TenDienThoai', TenDienThoai)
-    formData.append('DoPhanGiai', DoPhanGiai)
-    formData.append('HinhAnh', this.file, this.file.name) // Thêm tập tin vào FormData
-    formData.append('HeDieuHanh', HeDieuHanh)
-    formData.append('CamTruoc', CamTruoc)
-    formData.append('CamSau', CamSau)
-    formData.append('RAM', RAM)
-    formData.append('ROM', ROM)
-    formData.append('Pin', Pin)
-    formData.append('SoLuong', SoLuong)
-    formData.append('DonGia', DonGia)
-    formData.append('FK_MaHang', FK_MaHang)
-    try {
-        const response = await axios.put(`http://localhost:3000/api/v1/DienThoai/${selectDienThoai.value}`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        })
-        console.log(response.data)
-    } catch (error) {
-        console.log(error.response.data)
-    }
-}
 function onImageChange(e) {
-    this.file = e.target.files[0]
+    HinhAnh.value = e.target.files[0].name
+    fileHinhAnh = e.target.files[0]
 }
 
-onMounted(() => {
-    // // Activate tooltip
-    // //console.log(document.querySelector('#tooltip'))
-    // // Select/Deselect checkboxes
-    // // var checkbox = document.querySelector('#checkbox1')
-    // console.log(checkbox)
-    // document.querySelector('#selectAll').click(function () {
-    //     if (this.checked) {
-    //         checkbox.each(function () {
-    //             this.checked = true
-    //         })
-    //     } else {
-    //         checkbox.each(function () {
-    //             this.checked = false
-    //         })
-    //     }
-    // })
-    // checkbox.click(function () {
-    //     if (!this.checked) {
-    //         document.querySelector('#selectAll').prop('checked', false)
-    //     }
-    // })
+watchEffect(() => {
+    status.value = store.status
 })
 </script>
 
 <template>
+    <div v-if="status" class="alert alert-success" role="alert">{{ status }}</div>
     <h1 v-if="store.loading">Loading...</h1>
     <div v-else class="container">
         <div class="table-wrapper">
@@ -143,6 +75,7 @@ onMounted(() => {
                     </div>
                 </div>
             </div>
+
             <table class="table table-striped table-hover">
                 <thead>
                     <tr>
@@ -154,6 +87,7 @@ onMounted(() => {
                         </th>
                         <th>Tên Điện thoại</th>
                         <th>Độ phân giải</th>
+                        <th>Thương hiệu</th>
                         <th>Hình ảnh</th>
                         <th>Hệ điều hành</th>
                         <th>Cam trước</th>
@@ -163,7 +97,6 @@ onMounted(() => {
                         <th>Pin</th>
                         <th>Số lượng</th>
                         <th>Đơn giá</th>
-                        <th>Mã hãng</th>
                         <th>CRUD</th>
                     </tr>
                 </thead>
@@ -181,9 +114,8 @@ onMounted(() => {
                         </td>
                         <td>{{ DienThoai.TenDienThoai }}</td>
                         <td>{{ DienThoai.DoPhanGiai }}</td>
-                        <td>
-                            <img :src="require(`../../assets/images/${DienThoai.HinhAnh}`)" />
-                        </td>
+                        <td>{{ DienThoai.ThuongHieu }}</td>
+                        <td><img :src="store.AnhDienThoai.filter((Anh) => Anh.includes(DienThoai.HinhAnh))" /></td>
                         <td>{{ DienThoai.HeDieuHanh }}</td>
                         <td>{{ DienThoai.CamTruoc }}</td>
                         <td>{{ DienThoai.CamSau }}</td>
@@ -192,7 +124,6 @@ onMounted(() => {
                         <td>{{ DienThoai.Pin }}</td>
                         <td>{{ DienThoai.SoLuong }}</td>
                         <td>{{ DienThoai.DonGia }}</td>
-                        <td>{{ DienThoai.FK_MaHang }}</td>
                         <td>
                             <a
                                 href="#editEmployeeModal"
@@ -221,7 +152,24 @@ onMounted(() => {
     <div id="addEmployeeModal" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form @submit.prevent="addDienThoai">
+                <form
+                    @submit.prevent="
+                        store.addDienThoai(
+                            TenDienThoai,
+                            DoPhanGiai,
+                            ThuongHieu,
+                            HinhAnh,
+                            fileHinhAnh,
+                            HeDieuHanh,
+                            CamTruoc,
+                            CamSau,
+                            RAM,
+                            ROM,
+                            Pin,
+                            SoLuong,
+                            DonGia
+                        )
+                    ">
                     <div class="modal-header">
                         <h4 class="modal-title">Thêm điện thoại</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -233,7 +181,11 @@ onMounted(() => {
                         </div>
                         <div class="form-group">
                             <label>Độ phân giải</label>
-                            <input type="email" class="form-control" v-model="DoPhanGiai" required />
+                            <input type="text" class="form-control" v-model="DoPhanGiai" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Thương hiệu</label>
+                            <input type="text" class="form-control" v-model="ThuongHieu" required />
                         </div>
                         <div class="form-group">
                             <label>Hình ảnh</label>
@@ -265,15 +217,11 @@ onMounted(() => {
                         </div>
                         <div class="form-group">
                             <label>Số lượng</label>
-                            <input type="text" class="form-control" v-model="SoLuong" required />
+                            <input type="number" class="form-control" v-model="SoLuong" required />
                         </div>
                         <div class="form-group">
                             <label>Đơn giá</label>
-                            <input type="text" class="form-control" v-model="DonGia" required />
-                        </div>
-                        <div class="form-group">
-                            <label>Mã hãng</label>
-                            <input type="text" class="form-control" v-model="FK_MaHang" required />
+                            <input type="number" class="form-control" v-model="DonGia" required />
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -288,7 +236,26 @@ onMounted(() => {
     <div id="editEmployeeModal" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form @submit.prevent="updateDienThoai">
+                <form
+                    @submit.prevent="
+                        store.updateDienThoai(
+                            selectDienThoai.PK_MaDienThoai,
+                            selectDienThoai.TenDienThoai,
+                            selectDienThoai.DoPhanGiai,
+                            selectDienThoai.ThuongHieu,
+                            selectDienThoai.HinhAnh,
+                            HinhAnh,
+                            fileHinhAnh,
+                            selectDienThoai.HeDieuHanh,
+                            selectDienThoai.CamTruoc,
+                            selectDienThoai.CamSau,
+                            selectDienThoai.RAM,
+                            selectDienThoai.ROM,
+                            selectDienThoai.Pin,
+                            selectDienThoai.SoLuong,
+                            selectDienThoai.DonGia
+                        )
+                    ">
                     <div class="modal-header">
                         <h4 class="modal-title">Sửa thông tin điện thoại</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -300,7 +267,11 @@ onMounted(() => {
                         </div>
                         <div class="form-group">
                             <label>Độ phân giải</label>
-                            <input type="email" class="form-control" v-model="selectDienThoai.DoPhanGiai" required />
+                            <input type="text" class="form-control" v-model="selectDienThoai.DoPhanGiai" required />
+                        </div>
+                        <div class="form-group">
+                            <label>Thương hiệu</label>
+                            <input type="text" class="form-control" v-model="selectDienThoai.ThuongHieu" required />
                         </div>
                         <div class="form-group">
                             <label>Hình ảnh</label>
@@ -338,14 +309,10 @@ onMounted(() => {
                             <label>Đơn giá</label>
                             <input type="text" class="form-control" v-model="selectDienThoai.DonGia" required />
                         </div>
-                        <div class="form-group">
-                            <label>Mã hãng</label>
-                            <input type="text" class="form-control" v-model="selectDienThoai.FK_MaHang" required />
-                        </div>
                     </div>
                     <div class="modal-footer">
                         <input type="button" class="btn btn-default" data-dismiss="modal" value="Cancel" />
-                        <input type="submit" class="btn btn-success" value="Add" />
+                        <input type="submit" class="btn btn-success" value="Sửa" />
                     </div>
                 </form>
             </div>

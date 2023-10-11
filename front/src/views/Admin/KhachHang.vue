@@ -1,6 +1,6 @@
 <script setup>
 import { useKhachHangStore } from '@/stores/KhachHangStore'
-import { onMounted, ref } from 'vue'
+import { ref, watchEffect } from 'vue'
 const store = useKhachHangStore()
 store.getKhachHang()
 
@@ -14,6 +14,7 @@ let IsVerified = ref(false)
 let TinhTrangHoatDong = ref(true)
 let selectKhachHang = ref([])
 let deleteKhachHang = ref([])
+let status = ref('')
 
 // Hàm xử lý sự kiện checkbox tổng được thay đổi trạng thái
 const handleSelectAll = (event) => {
@@ -38,32 +39,13 @@ const handleSelectOne = (event) => {
     }
 }
 
-onMounted(() => {
-    // // Activate tooltip
-    // //console.log(document.querySelector('#tooltip'))
-    // // Select/Deselect checkboxes
-    // // var checkbox = document.querySelector('#checkbox1')
-    // console.log(checkbox)
-    // document.querySelector('#selectAll').click(function () {
-    //     if (this.checked) {
-    //         checkbox.each(function () {
-    //             this.checked = true
-    //         })
-    //     } else {
-    //         checkbox.each(function () {
-    //             this.checked = false
-    //         })
-    //     }
-    // })
-    // checkbox.click(function () {
-    //     if (!this.checked) {
-    //         document.querySelector('#selectAll').prop('checked', false)
-    //     }
-    // })
+watchEffect(() => {
+    status.value = store.status
 })
 </script>
 
 <template>
+    <div v-if="status" class="alert alert-success" role="alert">{{ status }}</div>
     <h1 v-if="store.loading">Loading...</h1>
     <div v-else class="container">
         <div class="table-wrapper">

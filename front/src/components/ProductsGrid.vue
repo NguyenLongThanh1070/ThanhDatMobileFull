@@ -10,8 +10,8 @@ const props = defineProps({
     <div class="container">
         <div class="row">
             <ProductsGridItem
-                v-for="product in props.products"
-                :key="product.PK_MaDienThoai"
+                v-for="(product, id) in props.products"
+                :key="id"
                 :PK_MaDienThoai="product.PK_MaDienThoai"
                 :TenDienThoai="product.TenDienThoai"
                 :DonGia="product.DonGia"

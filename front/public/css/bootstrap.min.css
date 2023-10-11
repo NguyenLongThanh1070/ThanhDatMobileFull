@@ -1768,7 +1768,7 @@ pre code {
     opacity: 1;
 }
 select.form-control:not([size]):not([multiple]) {
-    height: calc(2.25rem + 2px);
+    height: calc(2.25rem + 15px);
 }
 select.form-control:focus::-ms-value {
     color: #495057;

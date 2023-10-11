@@ -1,28 +1,25 @@
 const { PrismaClient } = require('@prisma/client')
 const { StatusCodes } = require('http-status-codes')
+const jwt = require('jsonwebtoken')
 const CustomAPIError = require('../errors')
 const crypto = require('crypto')
-const {
-    attachCookiesToResponse,
-    createTokenUser,
-    sendVerificationEmail,
-    sendResetPasswordEmail,
-    createHash,
-} = require('../utils')
+const { sendVerificationEmail, sendResetPasswordEmail } = require('../utils')
+const path = require('path')
 const prisma = new PrismaClient()
 
 const register = async (req, res) => {
     let { TenKhachHang, DiaChi, SoDienThoai, Email, TenDangNhap, MatKhau } = req.body
     if (!TenKhachHang || !DiaChi || !SoDienThoai || !Email || !TenDangNhap || !MatKhau) {
+        res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Không đủ dữ liệu' })
         throw new CustomAPIError.BadRequestError('Không đủ dữ liệu')
     }
     let KhachHang = await prisma.tblKhachHang.findFirst({
         where: {
-            Email: Email,
-            TenDangNhap: TenDangNhap,
+            OR: [{ Email: Email }, { TenDangNhap: TenDangNhap }],
         },
     })
     if (KhachHang) {
+        res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Tài khoản đã tồn tại' })
         throw new CustomAPIError.BadRequestError('Tài khoản đã tồn tại')
     }
     const hashedPassword = crypto.createHash('sha256').update(MatKhau).digest('hex')
@@ -39,13 +36,6 @@ const register = async (req, res) => {
         },
     })
     const origin = 'http://localhost:3000'
-    // const newOrigin = 'https://react-node-user-workflow-front-end.netlify.app';
-
-    // const tempOrigin = req.get('origin');
-    // const protocol = req.protocol;
-    // const host = req.get('host');
-    // const forwardedHost = req.get('x-forwarded-host');
-    // const forwardedProtocol = req.get('x-forwarded-proto');
 
     await sendVerificationEmail({
         TenDangNhap: TenDangNhap,
@@ -59,6 +49,7 @@ const register = async (req, res) => {
 const verifyEmail = async (req, res) => {
     const { verificationToken, Email } = req.body
     if (!verificationToken || !Email) {
+        res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Không đủ dữ liệu' })
         throw new CustomAPIError.BadRequestError('Không đủ dữ liệu')
     }
     const KhachHang = await prisma.tblKhachHang.findFirst({
@@ -67,92 +58,101 @@ const verifyEmail = async (req, res) => {
         },
     })
     if (KhachHang.length === 0) {
+        res.status(StatusCodes.UNAUTHORIZED).json({ msg: 'Không đủ dữ liệu' })
         throw new CustomAPIError.UnauthenticatedError('Không tìm thấy người dùng')
     }
-    if (KhachHang[0].VerificationToken !== verificationToken) {
+    if (KhachHang.VerificationToken !== verificationToken) {
+        res.status(StatusCodes.UNAUTHORIZED).json({ msg: 'Không đủ dữ liệu' })
         throw new CustomAPIError.UnauthenticatedError('Không đúng token')
     }
     await prisma.tblKhachHang.update({
         data: {
             IsVerified: true,
-            VerifiedDate: Date.now(),
             VerificationToken: '',
+            VerifiedDate: new Date(),
         },
         where: {
+            PK_MaKhachHang: KhachHang.PK_MaKhachHang,
             Email: KhachHang.Email,
         },
     })
-    return res.status(StatusCodes.OK).json({ msg: 'Xác thực email thành công' })
+    return res.status(StatusCodes.OK).sendFile(path.join(__dirname, '../public/VerifySuccess.html'))
 }
 
 const login = async (req, res) => {
-    const { TenDangNhap, MatKhau } = req.body
-    if (!TenDangNhap || !MatKhau) {
-        throw new CustomAPIError.BadRequestError('Không đủ dữ liệu')
-    }
-    let KhachHang = await prisma.tblKhachHang.findFirst({
-        where: {
-            TenDangNhap: TenDangNhap,
-        },
-    })
-    if (!KhachHang) {
-        throw new CustomAPIError.UnauthenticatedError('Tài khoản hoặc mật khẩu sai')
-    }
-    const hashedPassword = crypto.createHash('sha256').update(MatKhau).digest('hex')
-    if (KhachHang[0].MatKhau !== hashedPassword) {
-        throw new CustomAPIError.UnauthenticatedError('Sai mật khẩu!')
-    }
-    if (!KhachHang[0].IsVerified) {
-        throw new CustomAPIError.UnauthenticatedError('Chưa xác nhận email')
-    }
-    const tokenUser = createTokenUser(KhachHang)
-    let RefreshToken = ''
-    const existingToken = await prisma.tblToken.findFirst({
-        where: {
-            FK_MaKhachHang: KhachHang.PK_MaKhachHang,
-        },
-    })
-    if (existingToken) {
-        const { IsValid } = existingToken
-        if (!IsValid) {
-            throw new CustomAPIError.UnauthenticatedError('Token không hợp lệ')
+    try {
+        const { TenDangNhap, MatKhau } = req.body
+        if (!TenDangNhap || !MatKhau) {
+            res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Không đủ dữ liệu' })
+            throw new CustomAPIError.BadRequestError('Không đủ dữ liệu')
         }
-        RefreshToken = existingToken.RefreshToken
-        attachCookiesToResponse({ res, user: tokenUser, RefreshToken })
-        res.status(StatusCodes.OK).json({ user: tokenUser })
-        return
+        let KhachHang = await prisma.tblKhachHang.findFirst({
+            where: {
+                TenDangNhap: TenDangNhap,
+            },
+        })
+        if (!KhachHang) {
+            let NhanVien = await prisma.tblNhanVien.findFirst({
+                where: {
+                    TenDangNhap: TenDangNhap,
+                },
+            })
+            if (!NhanVien) {
+                res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Tài khoản hoặc mật khẩu sai' })
+                throw new CustomAPIError.UnauthenticatedError('Tài khoản hoặc mật khẩu sai')
+            }
+            const hashedPassword = crypto.createHash('sha256').update(MatKhau).digest('hex')
+            if (NhanVien.MatKhau !== hashedPassword) {
+                res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Sai mật khẩu' })
+                throw new CustomAPIError.UnauthenticatedError('Sai mật khẩu!')
+            }
+            const token = jwt.sign(
+                {
+                    PK_MaNhanVien: NhanVien.PK_MaNhanVien,
+                    TenDangNhap: NhanVien.TenDangNhap,
+                },
+                process.env.JWT_SECRET,
+                { expiresIn: '15m' }
+            )
+            return res.status(StatusCodes.OK).json({
+                token: token,
+                username: TenDangNhap,
+                role: NhanVien.Quyen,
+                message: 'Đăng nhập thành công',
+            })
+        }
+        const hashedPassword = crypto.createHash('sha256').update(MatKhau).digest('hex')
+        if (KhachHang.MatKhau !== hashedPassword) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Sai mật khẩu' })
+            throw new CustomAPIError.UnauthenticatedError('Sai mật khẩu!')
+        }
+        if (!KhachHang.IsVerified) {
+            res.status(StatusCodes.UNAUTHORIZED).json({ message: 'Chưa xác nhận email' })
+            throw new CustomAPIError.UnauthenticatedError('Chưa xác nhận email')
+        }
+        const token = jwt.sign(
+            {
+                PK_MaKhachHang: KhachHang.PK_MaKhachHang,
+                TenDangNhap: KhachHang.TenDangNhap,
+            },
+            process.env.JWT_SECRET,
+            { expiresIn: '15m' }
+        )
+        return res.status(StatusCodes.OK).json({
+            token: token,
+            username: TenDangNhap,
+            role: 'KhachHang',
+            message: 'Đăng nhập thành công',
+        })
+    } catch (error) {
+        console.log(error)
     }
-    RefreshToken = crypto.randomBytes(40).toString('hex')
-    const UserAgent = req.headers['user-agent']
-    const IP = req.ip
-    const UserToken = { RefreshToken, IP, UserAgent, FK_MaKhachHang: user.PK_MaKhachHang }
-    await prisma.tblToken.create({
-        data: UserToken,
-    })
-    attachCookiesToResponse({ res, user: tokenUser, RefreshToken })
-    res.status(StatusCodes.OK).json({ user: tokenUser })
-}
-
-const logout = async (req, res) => {
-    await prisma.tblToken.delete({
-        where: {
-            FK_MaKhachHang: req.user.PK_MaKhachHang,
-        },
-    })
-    res.cookie('accessToken', 'logout', {
-        httpOnly: true,
-        expires: new Date(Date.now()),
-    })
-    res.cookie('refreshToken', 'logout', {
-        httpOnly: true,
-        expires: new Date(Date.now()),
-    })
-    res.status(StatusCodes.OK).json({ msg: 'Đăng xuất' })
 }
 
 const forgotPassword = async (req, res) => {
     const { Email } = req.body
     if (!Email) {
+        res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Không đủ dữ liệu' })
         throw new CustomAPIError.BadRequestError('Hãy cung cấp email')
     }
     const KhachHang = await prisma.tblKhachHang.findFirst({
@@ -160,64 +160,51 @@ const forgotPassword = async (req, res) => {
             Email: Email,
         },
     })
-    if (KhachHang) {
-        const passwordToken = crypto.randomBytes(70).toString('hex')
-        const origin = 'http://localhost:3000'
+    if (!KhachHang) {
+        res.status(StatusCodes.NOT_FOUND).json({ msg: 'Không tìm thấy email' })
+        throw new CustomAPIError.NotFoundError('Không tìm thấy Email')
+    } else {
         await sendResetPasswordEmail({
             TenDangNhap: KhachHang.TenDangNhap,
             Email: KhachHang.Email,
-            Token: passwordToken,
-            origin,
-        })
-        const tenMinutes = 1000 * 60 * 10
-        const passwordTokenExpirationDate = new Date(Date.now() + tenMinutes)
-
-        await prisma.tblKhachHang.update({
-            data: {
-                passwordToken: createHash(passwordToken),
-                PasswordTokenExpiration: passwordTokenExpirationDate,
-            },
-            where: {
-                PK_MaKhachHang: KhachHang.PK_MaKhachHang,
-            },
         })
     }
-    res.status(StatusCodes.OK).json({ msg: 'Kiểm tra email của bạn' })
+    return res.status(StatusCodes.OK).json({ msg: 'Kiểm tra email của bạn' })
 }
 
 const resetPassword = async (req, res) => {
-    const { Token, Email, MatKhau } = req.body
-    if (!Token || !Email || !MatKhau) {
+    const { Email, MatKhau } = req.body
+    if (!Email || !MatKhau) {
+        res.status(StatusCodes.BAD_REQUEST).json({ msg: 'Không đủ dữ liệu' })
         throw new CustomAPIError.BadRequestError('Không đủ dữ liệu')
     }
-    const KhachHang = prisma.tblKhachHang.findFirst({
-        data: {
+    const KhachHang = await prisma.tblKhachHang.findFirst({
+        where: {
             Email: Email,
         },
     })
+    const hashedPassword = crypto.createHash('sha256').update(MatKhau).digest('hex')
     if (KhachHang) {
-        const currentDate = new Date()
-        if (KhachHang[0].PasswordToken === createHash(Token) && KhachHang[0].PasswordTokenExpiration > currentDate) {
-            await prisma.tblKhachHang.update({
-                data: {
-                    MatKhau: MatKhau,
-                    PasswordToken: null,
-                    PasswordTokenExpiration: null,
-                },
-                where: {
-                    Email: Email,
-                },
-            })
-        }
+        await prisma.tblKhachHang.update({
+            data: {
+                MatKhau: hashedPassword,
+            },
+            where: {
+                PK_MaKhachHang: KhachHang.PK_MaKhachHang,
+                Email: Email,
+            },
+        })
+        return res.status(StatusCodes.OK).json({ msg: 'Đổi mật khẩu thành công' })
+    } else {
+        res.status(StatusCodes.NOT_FOUND).json({ msg: 'Không tìm thấy người dùng' })
+        throw new CustomAPIError.NotFoundError('Không tìm thấy người dùng')
     }
-    res.status(StatusCodes.OK).json({ msg: 'Đổi mật khẩu thành công' })
 }
 
 module.exports = {
     register,
     verifyEmail,
     login,
-    logout,
     forgotPassword,
     resetPassword,
 }

@@ -25,12 +25,19 @@ export const useAuthStore = defineStore('auth', {
                     TenDangNhap: TenDangNhap,
                     MatKhau: MatKhau,
                 })
-                const { message, username, role } = res.data
-                this.token = message
+                const { token, username, role, message } = res.data
+                this.status = message
+                this.token = token
                 this.user.username = username
                 this.user.role = role
                 localStorage.setItem('token', this.token)
-                router.push('/')
+                localStorage.setItem('user.username', this.user.username)
+                localStorage.setItem('user.role', this.user.role)
+                if (this.user.role === 'KhachHang') {
+                    await router.push('/')
+                } else {
+                    await router.push('/admin-dashboard')
+                }
             } catch (err) {
                 this.status = 'Đăng nhập thất bại'
                 this.error = true
@@ -47,15 +54,46 @@ export const useAuthStore = defineStore('auth', {
                     TenDangNhap: TenDangNhap,
                     MatKhau: MatKhau,
                 })
-                console.log(res)
-                router.push('/')
+                await router.push('/dang-nhap')
+                this.status = res.data.msg
             } catch (err) {
                 this.error = true
                 this.message = err.response.data.message
             }
         },
+        async retrieval(Email) {
+            const URL = 'http://localhost:3000/api/v1/auth/forgot-password'
+            if (Email) {
+                try {
+                    const res = await axios.post(URL, {
+                        Email: Email,
+                    })
+                    this.email = Email
+                    this.status = res.data.msg
+                } catch (err) {
+                    this.error = true
+                    this.message = err.response.data.message
+                }
+            } else {
+                this.status = 'Hãy nhập email'
+            }
+        },
+        async resetPassword(Email, MatKhau) {
+            const URL = 'http://localhost:3000/api/v1/auth/reset-password'
+            try {
+                const res = await axios.post(URL, {
+                    Email: Email,
+                    MatKhau: MatKhau,
+                })
+                this.status = res.data.msg
+            } catch (error) {
+                console.log(error)
+            }
+        },
         async logout() {
-            await router.push('/login')
+            await router.push('/dang-nhap')
+            this.token = ''
+            this.user.username = ''
             localStorage.removeItem('auth')
             localStorage.removeItem('token')
         },

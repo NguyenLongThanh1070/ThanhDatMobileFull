@@ -1,15 +1,17 @@
 <script setup>
 import { useLienHeStore } from '@/stores/LienHeStore'
-import { onMounted, ref } from 'vue'
+import { ref, watchEffect } from 'vue'
+import moment from 'moment'
 const store = useLienHeStore()
-store.getContact()
+store.getLienHe()
 
 let TenNguoiGui = ref('')
 let Email = ref('')
 let SoDienThoai = ref('')
 let TinNhan = ref('')
-let selectContact = ref([])
-let deleteContacts = ref([])
+let selectLienHe = ref([])
+let deleteLienHe = ref([])
+let status = ref('')
 
 // Hàm xử lý sự kiện checkbox tổng được thay đổi trạng thái
 const handleSelectAll = (event) => {
@@ -17,49 +19,30 @@ const handleSelectAll = (event) => {
     checkboxList.forEach((c) => (c.checked = !c.checked))
     // Nếu checkbox tổng được check thì lấy danh sách ID của tất cả các checkbox con
     if (event.target.checked) {
-        deleteContacts.value = Array.from(checkboxList).map((checkbox) => parseInt(checkbox.value))
+        deleteLienHe.value = Array.from(checkboxList).map((checkbox) => parseInt(checkbox.value))
     } else {
-        deleteContacts.value = []
+        deleteLienHe.value = []
     }
 }
 
 // Hàm xử lý sự kiện checkbox con được thay đổi trạng thái
 const handleSelectOne = (event) => {
-    const contactId = parseInt(event.target.value)
-    // Nếu checkbox được check thì thêm contactId vào danh sách ID
+    const LienHeId = parseInt(event.target.value)
+    // Nếu checkbox được check thì thêm LienHeId vào danh sách ID
     if (event.target.checked) {
-        deleteContacts.value = [...deleteContacts.value, contactId]
+        deleteLienHe.value = [...deleteLienHe.value, LienHeId]
     } else {
-        deleteContacts.value = deleteContacts.value.filter((id) => id !== contactId)
+        deleteLienHe.value = deleteLienHe.value.filter((id) => id !== LienHeId)
     }
 }
 
-onMounted(() => {
-    // // Activate tooltip
-    // //console.log(document.querySelector('#tooltip'))
-    // // Select/Deselect checkboxes
-    // // var checkbox = document.querySelector('#checkbox1')
-    // console.log(checkbox)
-    // document.querySelector('#selectAll').click(function () {
-    //     if (this.checked) {
-    //         checkbox.each(function () {
-    //             this.checked = true
-    //         })
-    //     } else {
-    //         checkbox.each(function () {
-    //             this.checked = false
-    //         })
-    //     }
-    // })
-    // checkbox.click(function () {
-    //     if (!this.checked) {
-    //         document.querySelector('#selectAll').prop('checked', false)
-    //     }
-    // })
+watchEffect(() => {
+    status.value = store.status
 })
 </script>
 
 <template>
+    <div v-if="status" class="alert alert-success" role="alert">{{ status }}</div>
     <h1 v-if="store.loading">Loading...</h1>
     <div v-else class="container">
         <div class="table-wrapper">
@@ -70,10 +53,10 @@ onMounted(() => {
                     </div>
                     <div class="col-sm-6">
                         <a href="#addEmployeeModal" class="btn btn-success" data-toggle="modal"
-                            ><i class="material-icons fa-solid fa-circle-plus"></i> <span>Add New Employee</span></a
+                            ><i class="material-icons fa-solid fa-circle-plus"></i> <span>Thêm liên hệ</span></a
                         >
                         <a href="#deleteEmployeeModal" class="btn btn-danger" data-toggle="modal"
-                            ><i class="material-icons fa-solid fa-circle-minus"></i><span>Delete</span></a
+                            ><i class="material-icons fa-solid fa-circle-minus"></i><span>Xóa</span></a
                         >
                     </div>
                 </div>
@@ -96,28 +79,28 @@ onMounted(() => {
                     </tr>
                 </thead>
                 <tbody>
-                    <tr v-for="(contact, id) in store.contacts" :key="id">
+                    <tr v-for="(LienHe, id) in store.LienHe" :key="id">
                         <td>
                             <span class="custom-checkbox">
                                 <input
                                     type="checkbox"
                                     :id="'checkbox' + id"
-                                    :value="contact.PK_MaLienHe"
+                                    :value="LienHe.PK_MaLienHe"
                                     @change="handleSelectOne" />
                                 <label for="'checkbox'+id"></label>
                             </span>
                         </td>
-                        <td>{{ contact.TenNguoiGui }}</td>
-                        <td>{{ contact.Email }}</td>
-                        <td>{{ contact.SoDienThoai }}</td>
-                        <td>{{ contact.TinNhan }}</td>
-                        <td>{{ contact.ThoiGian }}</td>
+                        <td>{{ LienHe.TenNguoiGui }}</td>
+                        <td>{{ LienHe.Email }}</td>
+                        <td>{{ LienHe.SoDienThoai }}</td>
+                        <td>{{ LienHe.TinNhan }}</td>
+                        <td>{{ moment(LienHe.ThoiGian).format('DD-MM-YYYY') }}</td>
                         <td>
                             <a
                                 href="#editEmployeeModal"
                                 class="edit"
                                 data-toggle="modal"
-                                @click="selectContact = { ...contact }"
+                                @click="selectLienHe = { ...LienHe }"
                                 ><i
                                     class="material-icons fa-solid fa-pen-to-square"
                                     data-toggle="tooltip"
@@ -127,7 +110,7 @@ onMounted(() => {
                                 href="#deleteEmployeeModal"
                                 class="delete"
                                 data-toggle="modal"
-                                @click="deleteContacts = { ...contact }"
+                                @click="deleteLienHe = { ...LienHe }"
                                 ><i class="material-icons fa-solid fa-trash" data-toggle="tooltip" title="Delete"></i
                             ></a>
                         </td>
@@ -140,7 +123,7 @@ onMounted(() => {
     <div id="addEmployeeModal" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form @submit.prevent="store.addContact(TenNguoiGui, Email, SoDienThoai, TinNhan)">
+                <form @submit.prevent="store.addLienHe(TenNguoiGui, Email, SoDienThoai, TinNhan)">
                     <div class="modal-header">
                         <h4 class="modal-title">Thêm liên hệ</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
@@ -177,37 +160,37 @@ onMounted(() => {
             <div class="modal-content">
                 <form
                     @submit.prevent="
-                        store.updateContact(
-                            selectContact.PK_MaLienHe,
-                            selectContact.TenNguoiGui,
-                            selectContact.Email,
-                            selectContact.SoDienThoai,
-                            selectContact.TinNhan
+                        store.updateLienHe(
+                            selectLienHe.PK_MaLienHe,
+                            selectLienHe.TenNguoiGui,
+                            selectLienHe.Email,
+                            selectLienHe.SoDienThoai,
+                            selectLienHe.TinNhan
                         )
                     ">
                     <div class="modal-header">
-                        <h4 class="modal-title">Edit Employee</h4>
+                        <h4 class="modal-title">Chỉnh sửa liên hệ</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     </div>
                     <div class="modal-body">
                         <div class="form-group" style="display: none">
-                            <input type="text" class="form-control" v-model="selectContact.PK_MaLienHe" />
+                            <input type="text" class="form-control" v-model="selectLienHe.PK_MaLienHe" />
                         </div>
                         <div class="form-group">
                             <label>Tên người gửi</label>
-                            <input type="text" class="form-control" v-model="selectContact.TenNguoiGui" required />
+                            <input type="text" class="form-control" v-model="selectLienHe.TenNguoiGui" required />
                         </div>
                         <div class="form-group">
                             <label>Email</label>
-                            <input type="email" class="form-control" v-model="selectContact.Email" required />
+                            <input type="email" class="form-control" v-model="selectLienHe.Email" required />
                         </div>
                         <div class="form-group">
                             <label>Số điện thoại</label>
-                            <textarea class="form-control" v-model="selectContact.SoDienThoai" required></textarea>
+                            <textarea class="form-control" v-model="selectLienHe.SoDienThoai" required></textarea>
                         </div>
                         <div class="form-group">
                             <label>Tin nhắn</label>
-                            <input type="text" class="form-control" v-model="selectContact.TinNhan" required />
+                            <input type="text" class="form-control" v-model="selectLienHe.TinNhan" required />
                         </div>
                     </div>
                     <div class="modal-footer">
@@ -222,13 +205,13 @@ onMounted(() => {
     <div id="deleteEmployeeModal" class="modal fade">
         <div class="modal-dialog">
             <div class="modal-content">
-                <form @submit.prevent="store.deleteContact(deleteContacts)">
+                <form @submit.prevent="store.deleteLienHe(deleteLienHe)">
                     <div class="modal-header">
                         <h4 class="modal-title">Xóa liên hệ</h4>
                         <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
                     </div>
                     <div class="form-group" style="display: none">
-                        <input type="text" class="form-control" v-model="deleteContacts" />
+                        <input type="text" class="form-control" v-model="deleteLienHe" />
                     </div>
                     <div class="modal-body">
                         <p>Bạn có chắc chắn muốn xóa những liên hệ này không?</p>

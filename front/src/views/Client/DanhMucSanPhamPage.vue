@@ -4,22 +4,57 @@ import { useDienThoaiStore } from '@/stores/DienThoaiStore'
 import { ref, computed } from 'vue'
 
 const store = useDienThoaiStore()
+store.getDienThoai()
 const productsPerPage = 6
 const currentPage = ref(1)
+const selectedBrands = ref([])
+let min = ref(1000)
+let max = ref(10000000)
 
-const totalProducts = computed(() => store.products.length)
-const totalPages = computed(() => Math.ceil(totalProducts.value / productsPerPage))
-
-const paginatedProducts = computed(() => {
-    const start = (currentPage.value - 1) * productsPerPage
-    const end = start + productsPerPage
-    return store.products.slice(start, end)
+//pagination
+const totalProducts = computed(() => {
+    if (store.TimDienThoai.length !== 0) {
+        return store.TimDienThoai.length
+    } else if (store.FilterDienThoai.length !== 0) {
+        return store.FilterDienThoai.length
+    } else {
+        return store.DienThoai.length
+    }
 })
+
+const totalPages = computed(() => Math.ceil(totalProducts.value / productsPerPage))
 
 function goToPage(page) {
     if (page >= 1 && page <= totalPages.value) {
         currentPage.value = page
     }
+}
+
+let paginatedProducts = computed(() => {
+    if (store.TimDienThoai.length !== 0) {
+        return store.TimDienThoai.slice(
+            (currentPage.value - 1) * productsPerPage,
+            (currentPage.value - 1) * productsPerPage + productsPerPage
+        )
+    } else if (store.FilterDienThoai.length !== 0) {
+        return store.FilterDienThoai.slice(
+            (currentPage.value - 1) * productsPerPage,
+            (currentPage.value - 1) * productsPerPage + productsPerPage
+        )
+    } else {
+        return store.DienThoai.slice(
+            (currentPage.value - 1) * productsPerPage,
+            (currentPage.value - 1) * productsPerPage + productsPerPage
+        )
+    }
+})
+
+const brands = computed(() => {
+    return [...new Set(store.DienThoai.map((phone) => phone.ThuongHieu))]
+})
+
+const getBrandCount = (brand) => {
+    return store.DienThoai.filter((phone) => phone.ThuongHieu === brand).length
 }
 </script>
 <template>
@@ -37,167 +72,73 @@ function goToPage(page) {
             <div class="row">
                 <div class="col-md-3">
                     <div class="card">
-                        <!-- filter-group  .// -->
-                        <article class="filter-group">
-                            <header class="card-header">
-                                <a
-                                    href="#"
-                                    data-toggle="collapse"
-                                    data-target="#collapse_2"
-                                    aria-expanded="true"
-                                    class="">
-                                    <i class="icon-control fa fa-chevron-down"></i>
-                                    <h6 class="title">Hãng</h6>
-                                </a>
-                            </header>
-                            <div class="filter-content collapse show" id="collapse_2">
-                                <div class="card-body">
-                                    <label class="custom-control custom-checkbox">
-                                        <input type="checkbox" checked="" class="custom-control-input" />
-                                        <div class="custom-control-label">
-                                            Mercedes <b class="badge badge-pill badge-light float-right">120</b>
-                                        </div>
-                                    </label>
-                                    <label class="custom-control custom-checkbox">
-                                        <input type="checkbox" checked="" class="custom-control-input" />
-                                        <div class="custom-control-label">
-                                            Toyota <b class="badge badge-pill badge-light float-right">15</b>
-                                        </div>
-                                    </label>
-                                    <label class="custom-control custom-checkbox">
-                                        <input type="checkbox" checked="" class="custom-control-input" />
-                                        <div class="custom-control-label">
-                                            Mitsubishi <b class="badge badge-pill badge-light float-right">35</b>
-                                        </div>
-                                    </label>
-                                    <label class="custom-control custom-checkbox">
-                                        <input type="checkbox" checked="" class="custom-control-input" />
-                                        <div class="custom-control-label">
-                                            Nissan <b class="badge badge-pill badge-light float-right">89</b>
-                                        </div>
-                                    </label>
-                                    <label class="custom-control custom-checkbox">
-                                        <input type="checkbox" class="custom-control-input" />
-                                        <div class="custom-control-label">
-                                            Honda <b class="badge badge-pill badge-light float-right">30</b>
-                                        </div>
-                                    </label>
-                                </div>
-                                <!-- card-body.// -->
-                            </div>
-                        </article>
-                        <!-- filter-group .// -->
-                        <article class="filter-group">
-                            <header class="card-header">
-                                <a
-                                    href="#"
-                                    data-toggle="collapse"
-                                    data-target="#collapse_3"
-                                    aria-expanded="true"
-                                    class="">
-                                    <i class="icon-control fa fa-chevron-down"></i>
-                                    <h6 class="title">Price range</h6>
-                                </a>
-                            </header>
-                            <div class="filter-content collapse show" id="collapse_3" style="">
-                                <div class="card-body">
-                                    <input type="range" class="custom-range" min="0" max="100" name="" />
-                                    <div class="form-row">
-                                        <div class="form-group col-md-6">
-                                            <label>Min</label>
-                                            <input class="form-control" placeholder="$0" type="number" />
-                                        </div>
-                                        <div class="form-group text-right col-md-6">
-                                            <label>Max</label>
-                                            <input class="form-control" placeholder="$1,0000" type="number" />
-                                        </div>
+                        <form @submit.prevent="store.filterDienThoai(selectedBrands, min, max)">
+                            <!-- filter-group  .// -->
+                            <article class="filter-group">
+                                <header class="card-header">
+                                    <a data-toggle="collapse" data-target="#collapse_2" aria-expanded="true" class="">
+                                        <i class="icon-control fa fa-chevron-down"></i>
+                                        <h6 class="title">Hãng</h6>
+                                    </a>
+                                </header>
+                                <div class="filter-content collapse show" id="collapse_2">
+                                    <div class="card-body">
+                                        <label
+                                            class="custom-control custom-checkbox"
+                                            v-for="(brand, id) in brands"
+                                            :key="id">
+                                            <input
+                                                type="checkbox"
+                                                class="custom-control-input"
+                                                v-model="selectedBrands"
+                                                :value="brand" />
+                                            <div class="custom-control-label">
+                                                {{ brand }}
+                                                <b class="badge badge-pill badge-light float-right">{{
+                                                    getBrandCount(brand)
+                                                }}</b>
+                                            </div>
+                                        </label>
                                     </div>
-                                    <!-- form-row.// -->
-                                    <button class="btn btn-block btn-primary">Apply</button>
+                                    <!-- card-body.// -->
                                 </div>
-                                <!-- card-body.// -->
-                            </div>
-                        </article>
-                        <!-- filter-group .// -->
-                        <article class="filter-group">
-                            <header class="card-header">
-                                <a
-                                    href="#"
-                                    data-toggle="collapse"
-                                    data-target="#collapse_4"
-                                    aria-expanded="true"
-                                    class="">
-                                    <i class="icon-control fa fa-chevron-down"></i>
-                                    <h6 class="title">Sizes</h6>
-                                </a>
-                            </header>
-                            <div class="filter-content collapse show" id="collapse_4" style="">
-                                <div class="card-body">
-                                    <label class="checkbox-btn">
-                                        <input type="checkbox" />
-                                        <span class="btn btn-light"> XS </span>
-                                    </label>
-
-                                    <label class="checkbox-btn">
-                                        <input type="checkbox" />
-                                        <span class="btn btn-light"> SM </span>
-                                    </label>
-
-                                    <label class="checkbox-btn">
-                                        <input type="checkbox" />
-                                        <span class="btn btn-light"> LG </span>
-                                    </label>
-
-                                    <label class="checkbox-btn">
-                                        <input type="checkbox" />
-                                        <span class="btn btn-light"> XXL </span>
-                                    </label>
+                            </article>
+                            <!-- filter-group .// -->
+                            <article class="filter-group">
+                                <header class="card-header">
+                                    <a data-toggle="collapse" data-target="#collapse_3" aria-expanded="true">
+                                        <i class="icon-control fa fa-chevron-down"></i>
+                                        <h6 class="title">Khoảng giá</h6>
+                                    </a>
+                                </header>
+                                <div class="filter-content collapse show" id="collapse_3">
+                                    <div class="card-body">
+                                        <div class="form-row">
+                                            <div class="form-group col-md-6">
+                                                <label>Min</label>
+                                                <input
+                                                    class="form-control"
+                                                    placeholder="0"
+                                                    type="number"
+                                                    v-model="min" />
+                                            </div>
+                                            <div class="form-group text-right col-md-6">
+                                                <label>Max</label>
+                                                <input
+                                                    class="form-control"
+                                                    placeholder="100,000,000"
+                                                    type="number"
+                                                    v-model="max" />
+                                            </div>
+                                        </div>
+                                        <!-- form-row.// -->
+                                        <button class="btn btn-block btn-primary" type="submit">Apply</button>
+                                    </div>
+                                    <!-- card-body.// -->
                                 </div>
-                                <!-- card-body.// -->
-                            </div>
-                        </article>
-                        <!-- filter-group .// -->
-                        <article class="filter-group">
-                            <header class="card-header">
-                                <a
-                                    href="#"
-                                    data-toggle="collapse"
-                                    data-target="#collapse_5"
-                                    aria-expanded="false"
-                                    class="">
-                                    <i class="icon-control fa fa-chevron-down"></i>
-                                    <h6 class="title">More filter</h6>
-                                </a>
-                            </header>
-                            <div class="filter-content collapse in" id="collapse_5" style="">
-                                <div class="card-body">
-                                    <label class="custom-control custom-radio">
-                                        <input
-                                            type="radio"
-                                            name="myfilter_radio"
-                                            checked=""
-                                            class="custom-control-input" />
-                                        <div class="custom-control-label">Any condition</div>
-                                    </label>
+                            </article>
+                        </form>
 
-                                    <label class="custom-control custom-radio">
-                                        <input type="radio" name="myfilter_radio" class="custom-control-input" />
-                                        <div class="custom-control-label">Brand new</div>
-                                    </label>
-
-                                    <label class="custom-control custom-radio">
-                                        <input type="radio" name="myfilter_radio" class="custom-control-input" />
-                                        <div class="custom-control-label">Used items</div>
-                                    </label>
-
-                                    <label class="custom-control custom-radio">
-                                        <input type="radio" name="myfilter_radio" class="custom-control-input" />
-                                        <div class="custom-control-label">Very old</div>
-                                    </label>
-                                </div>
-                                <!-- card-body.// -->
-                            </div>
-                        </article>
                         <!-- filter-group .// -->
                     </div>
                     <!-- card.// -->
@@ -210,26 +151,10 @@ function goToPage(page) {
                                 Previous
                             </button>
                         </li>
-                        <li class="page-item">
-                            <button class="page-link" @click="goToPage(1)" :disabled="currentPage === 1">1</button>
-                        </li>
-                        <li class="page-item">
-                            <button class="page-link" @click="goToPage(2)" :disabled="currentPage === 2">2</button>
-                        </li>
-                        <li class="page-item">
-                            <button class="page-link" @click="goToPage(3)" :disabled="currentPage === 3">3</button>
-                        </li>
-                        <li class="page-item">
-                            <button class="page-link" @click="goToPage(4)" :disabled="currentPage === 4">4</button>
-                        </li>
-                        <li class="page-item">
-                            <button class="page-link" @click="goToPage(5)" :disabled="currentPage === 5">5</button>
-                        </li>
-                        <li class="page-item">
-                            <button class="page-link" @click="goToPage(6)" :disabled="currentPage === 6">6</button>
-                        </li>
-                        <li class="page-item">
-                            <button class="page-link" @click="goToPage(7)" :disabled="currentPage === 7">7</button>
+                        <li class="page-item" v-for="page in totalPages" :key="page">
+                            <button class="page-link" @click="goToPage(page)" :disabled="currentPage === page">
+                                {{ page }}
+                            </button>
                         </li>
                         <li class="page-item" :class="{ disabled: currentPage === totalPages }">
                             <button

@@ -1,4 +1,3 @@
-<script setup></script>
 <template>
     <footer>
         <div id="contact" class="footer">

@@ -67,7 +67,15 @@ const routes = [
         },
     },
     {
-        path: '/san-pham/:PK_MaDienThoai',
+        path: '/dat-lai-mat-khau',
+        name: 'DatLaiMatKhau',
+        component: () => import('@/views/Client/DatLaiMatKhau.vue'),
+        meta: {
+            title: 'Đặt lại mật khẩu',
+        },
+    },
+    {
+        path: '/:PK_MaDienThoai',
         name: 'TrangSanPhamChiTiet',
         component: () => import('@/views/Client/TrangSanPhamChiTietPage.vue'),
         meta: {
@@ -85,23 +93,15 @@ const routes = [
     },
     {
         path: '/admin-dienthoai',
-        name: 'DienThoai',
+        name: 'Điện thoại',
         component: () => import('@/views/Admin/DienThoai.vue'),
         meta: {
             title: 'Điện thoại',
         },
     },
     {
-        path: '/admin-hang',
-        name: 'Hang',
-        component: () => import('@/views/Admin/HangDienThoai.vue'),
-        meta: {
-            title: 'Hãng',
-        },
-    },
-    {
         path: '/admin-khachhang',
-        name: 'KhachHang',
+        name: 'Khách hàng',
         component: () => import('@/views/Admin/KhachHang.vue'),
         meta: {
             title: 'Khách hàng',
@@ -109,34 +109,18 @@ const routes = [
     },
     {
         path: '/admin-lienhe',
-        name: 'LienHe',
+        name: 'Liên hệ',
         component: () => import('../views/Admin/LienHe.vue'),
         meta: {
             title: 'Liên hệ',
         },
     },
     {
-        path: '/admin-nhacungcap',
-        name: 'NhaCungCap',
-        component: () => import('@/views/Admin/NhaCungCap.vue'),
-        meta: {
-            title: 'Nhà cung cấp',
-        },
-    },
-    {
         path: '/admin-nhanvien',
-        name: 'NhanVien',
+        name: 'Nhân viên',
         component: () => import('@/views/Admin/NhanVien.vue'),
         meta: {
             title: 'Nhân viên',
-        },
-    },
-    {
-        path: '/admin-phieunhap',
-        name: 'PhieuNhap',
-        component: () => import('@/views/Admin/PhieuNhap.vue'),
-        meta: {
-            title: 'Điện thoại',
         },
     },
 ]

@@ -1,4 +1,8 @@
-<script setup></script>
+<script setup>
+import { useAuthStore } from '@/stores/AuthStore'
+
+const store = useAuthStore()
+</script>
 <template>
     <header>
         <!-- header inner -->
@@ -21,46 +25,23 @@
                             <div class="limit-box">
                                 <nav class="main-menu">
                                     <ul class="menu-area-main">
-                                        <li class="active">
-                                            <router-link to="/">Trang chủ</router-link>
+                                        <li>
+                                            <router-link to="/admin-dashboard">Dashboard</router-link>
                                         </li>
                                         <li>
-                                            <router-link to="/danh-muc-san-pham">Sản phẩm</router-link>
+                                            <router-link to="/admin-dienthoai">Điện thoại</router-link>
                                         </li>
                                         <li>
-                                            <router-link to="/lien-he">Liên hệ</router-link>
+                                            <router-link to="/admin-khachhang">Khách hàng</router-link>
                                         </li>
-                                        <li v-if="username">
-                                            <a href="/dangxuat">{{ username }}, đăng xuất</a>
+                                        <li>
+                                            <router-link to="/admin-lienhe">Liên hệ</router-link>
                                         </li>
-                                        <li v-if="username">
-                                            <router-link to="/gio-hang"
-                                                ><i class="fa-solid fa-cart-shopping"></i
-                                            ></router-link>
+                                        <li>
+                                            <router-link to="/admin-nhanvien">Nhân viên</router-link>
                                         </li>
-                                        <li v-if="!username">
-                                            <router-link to="/dang-ky">Đăng ký</router-link>
-                                        </li>
-                                        <li v-if="!username">
-                                            <router-link to="/dang-nhap"
-                                                ><i class="fa-solid fa-cart-shopping"></i
-                                            ></router-link>
-                                        </li>
-                                        <li class="last">
-                                            <form action="/tim-kiem" method="get">
-                                                <div class="input-group rounded">
-                                                    <input
-                                                        type="search"
-                                                        class="form-control rounded"
-                                                        placeholder="Search"
-                                                        aria-label="Search"
-                                                        aria-describedby="search-addon"
-                                                        name="search" />
-                                                    <button type="submit" class="btn btn-primary">
-                                                        <i class="fas fa-search"></i>
-                                                    </button>
-                                                </div>
-                                            </form>
+                                        <li v-if="store.user.username" @click="store.logout()">
+                                            <a>{{ store.user.username }}, đăng xuất</a>
                                         </li>
                                     </ul>
                                 </nav>
@@ -82,3 +63,14 @@
         <!-- end header inner -->
     </header>
 </template>
+
+<style scoped>
+a {
+    cursor: pointer;
+    transition: transform 0.2s ease-in-out;
+}
+
+a:hover {
+    transform: scale(1.05);
+}
+</style>

@@ -4,6 +4,6 @@ const { addKhachHang, getKhachHang, updateKhachHang, deleteKhachHang } = require
 
 router.route('/').post(addKhachHang).get(getKhachHang)
 
-router.route('/:id').put(updateKhachHang).delete(deleteKhachHang)
+router.route('/:PK_MaKhachHang').put(updateKhachHang).delete(deleteKhachHang)
 
 module.exports = router

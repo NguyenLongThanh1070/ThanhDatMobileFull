@@ -1,16 +1,15 @@
 const express = require('express')
 const router = express.Router()
 const {
-    createProduct,
-    getAllProducts,
-    getSingleProduct,
-    updateProduct,
-    deleteProduct,
-    uploadImage,
-} = require('../controllers/productController')
+    createDienThoai,
+    getAllDienThoai,
+    getSingleDienThoai,
+    updateDienThoai,
+    deleteDienThoai,
+} = require('../controllers/DienThoaiController')
 
-router.route('/').post(createProduct).get(getAllProducts)
+router.route('/').post(createDienThoai).get(getAllDienThoai)
 
-router.route('/:id').get(getSingleProduct).patch(updateProduct).delete(deleteProduct)
+router.route('/:PK_MaDienThoai').get(getSingleDienThoai).put(updateDienThoai).delete(deleteDienThoai)
 
 module.exports = router

@@ -1,12 +1,35 @@
 <script setup>
-import { ref } from 'vue'
-// import { useCartStore } from '@/stores/CartStore'
+import { computed, ref, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/AuthStore'
+import { useGioHangStore } from '@/stores/GioHangStore'
 import ProductsList from '@/components/ProductsList.vue'
 
-// const store = useCartStore()
+const CartStore = useGioHangStore()
+const AuthStore = useAuthStore()
+let DiaChi = ref('')
+let SoDienThoai = ref('')
+CartStore.getGioHang(AuthStore.user.username)
 let total = ref(0)
-// let checkout = ref(false)
-// let cart = store.cart
+
+total = computed(() => {
+    return CartStore.GioHang.reduce((accumulator, current) => {
+        return accumulator + current.SoLuong * Number(current.DonGia)
+    }, 0)
+})
+
+onMounted(() => {
+    let GiaSanPham = document.querySelectorAll('.new-price')
+    let ProductPrice = document.querySelectorAll('.mb-1.me-1')
+    for (let i = 0; i < GiaSanPham.length; i++) {
+        GiaSanPham[i].innerHTML = numberWithCommas(GiaSanPham[i].innerHTML)
+    }
+    for (let i = 0; i < ProductPrice.length; i++) {
+        ProductPrice[i].innerHTML = numberWithCommas(ProductPrice[i].innerHTML)
+    }
+    function numberWithCommas(x) {
+        return x.toString().replace(/\B(?<!\.\d*)(?=(\d{3})+(?!\d))/g, ',')
+    }
+})
 </script>
 
 <template>
@@ -15,14 +38,13 @@ let total = ref(0)
             <div class="col-md-8">
                 <div class="product-details mr-2">
                     <div class="d-flex flex-row align-items-center">
-                        <RouterLink href="/danh-muc-san-pham"
-                            ><i class="fa fa-long-arrow-left"></i
-                            ><span class="ml-2">Continue Shopping</span></RouterLink
+                        <RouterLink to="/danh-muc-san-pham"
+                            ><i class="fa fa-long-arrow-left"></i><span class="ml-2">Tiếp tục mua sắm</span></RouterLink
                         >
                     </div>
                     <hr />
-                    <h3 class="mb-0">Shopping cart</h3>
-                    <ProductsList />
+                    <h3 class="mb-0">Giỏ hàng</h3>
+                    <ProductsList :products="CartStore.GioHang" />
                 </div>
             </div>
             <div class="col-md-4">
@@ -30,14 +52,15 @@ let total = ref(0)
                     <div class="d-flex justify-content-between align-items-center">
                         <span>Hóa đơn</span>
                     </div>
-                    <form action="/thanh-toan" method="post">
+                    <form @submit.prevent="CartStore.checkOut(AuthStore.user.username, DiaChi, SoDienThoai)">
                         <div>
                             <label class="credit-card-label">Địa chỉ</label>
                             <input
                                 type="text"
                                 class="form-control credit-inputs"
                                 placeholder="Nhập địa chỉ"
-                                name="address" />
+                                v-model="DiaChi"
+                                required />
                         </div>
                         <div>
                             <label class="credit-card-label">Số điện thoại</label>
@@ -45,20 +68,19 @@ let total = ref(0)
                                 type="text"
                                 class="form-control credit-inputs"
                                 placeholder="Nhập số điện thoại"
-                                name="phone" />
+                                v-model="SoDienThoai"
+                                required />
                         </div>
                         <hr class="line" />
                         <div class="d-flex justify-content-between information">
-                            <span>Giá sản phẩm</span><span class="new-price"> đồng</span>
+                            <span>Giá sản phẩm</span><span class="new-price">{{ total }} </span>đồng
                         </div>
                         <div class="d-flex justify-content-between information">
-                            <span>Phí vận chuyển</span><span class="new-price"> đồng</span>
+                            <span>Phí vận chuyển</span><span class="new-price"> 0 </span>đồng
                         </div>
                         <div class="d-flex justify-content-between information">
-                            <span>Tổng cộng</span><span class="new-price">{{ total }} đồng</span>
+                            <span>Tổng cộng</span><span class="new-price">{{ total }} </span>đồng
                         </div>
-                        <input type="hidden" name="price" value="<%=total %>" />
-                        <input type="hidden" name="username" value="<%=username %>" />
                         <button class="btn btn-primary btn-block d-flex justify-content-between mt-3" type="submit">
                             <span>Thanh toán<i class="fa fa-long-arrow-right ml-1"></i></span>
                         </button>
@@ -68,3 +90,7 @@ let total = ref(0)
         </div>
     </div>
 </template>
+
+<style scoped>
+@import '../../assets/css/giohang.css';
+</style>

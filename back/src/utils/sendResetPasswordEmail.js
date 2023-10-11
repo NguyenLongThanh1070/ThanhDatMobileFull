@@ -1,12 +1,9 @@
 const sendEmail = require('./sendEmail')
 
-const sendResetPasswordEmail = async ({ TenDangNhap, Email, Token, origin }) => {
+const sendResetPasswordEmail = async ({ TenDangNhap, Email }) => {
     const message = `
-    <form method="post" action="${origin}/api/v1/auth/reset-password">
-        <input type="hidden" name="Token" value="${Token}">
-        <input type="hidden" name="Email" value="${Email}">
-        <button type="submit">Đặt lại mật khẩu</button>
-    </form>`
+    <p>Nhấn vào "Đặt lại mật khẩu" để đặt lại mật khẩu</p>
+    <a href="http://localhost:8080/dat-lai-mat-khau">Đặt lại mật khẩu</a>`
 
     return sendEmail({
         to: Email,
